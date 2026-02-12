@@ -148,12 +148,21 @@ class _DestinationSearchScreenState extends State<DestinationSearchScreen> {
                           style: const TextStyle(fontSize: 16),
                         ),
                         onTap: () {
-                          final lat = result['lat'];
-                          final lon = result['lon'];
+                          final lat =
+                              double.tryParse(result['lat'].toString()) ?? 0.0;
+                          final lon =
+                              double.tryParse(result['lon'].toString()) ?? 0.0;
                           final name = result['display_name'];
-                          context.push(
-                            '/fare_estimate?lat=$lat&lng=$lon&name=${Uri.encodeComponent(name)}',
-                          );
+
+                          if (Navigator.of(context).canPop()) {
+                            Navigator.of(
+                              context,
+                            ).pop({'lat': lat, 'lon': lon, 'name': name});
+                          } else {
+                            context.push(
+                              '/fare_estimate?lat=$lat&lng=$lon&name=${Uri.encodeComponent(name)}',
+                            );
+                          }
                         },
                       );
                     },

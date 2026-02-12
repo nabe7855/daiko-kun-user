@@ -43,6 +43,7 @@ dependencies:
   geolocator: any
   google_fonts: any
   intl: any
+  image_picker: ^1.2.1
 
 dev_dependencies:
   flutter_test:

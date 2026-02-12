@@ -1,0 +1,22 @@
+﻿Analyzing daiko-kun...                                          
+
+  error - Classes can only extend other classes - lib\features\auth\presentation\auth_provider.dart:11:28 - extends_non_class
+  error - Too many positional arguments: 0 expected, but 1 found - lib\features\auth\presentation\auth_provider.dart:12:26 - extra_positional_arguments
+  error - Undefined name 'state' - lib\features\auth\presentation\auth_provider.dart:21:5 - undefined_identifier
+  error - Undefined name 'state' - lib\features\auth\presentation\auth_provider.dart:36:9 - undefined_identifier
+  error - Undefined name 'state' - lib\features\auth\presentation\auth_provider.dart:38:9 - undefined_identifier
+  error - Undefined name 'state' - lib\features\auth\presentation\auth_provider.dart:44:7 - undefined_identifier
+  error - Undefined name 'state' - lib\features\auth\presentation\auth_provider.dart:49:5 - undefined_identifier
+  error - The function 'StateNotifierProvider' isn't defined - lib\features\auth\presentation\auth_provider.dart:54:5 - undefined_function
+  error - The property 'hasError' can't be unconditionally accessed because the receiver can be 'null' - lib\features\auth\presentation\login_screen.dart:28:16 - unchecked_use_of_nullable_value
+  error - The property 'error' can't be unconditionally accessed because the receiver can be 'null' - lib\features\auth\presentation\login_screen.dart:31:67 - unchecked_use_of_nullable_value
+  error - The property 'hasValue' can't be unconditionally accessed because the receiver can be 'null' - lib\features\auth\presentation\login_screen.dart:32:23 - unchecked_use_of_nullable_value
+  error - The property 'value' can't be unconditionally accessed because the receiver can be 'null' - lib\features\auth\presentation\login_screen.dart:32:40 - unchecked_use_of_nullable_value
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\home\presentation\home_screen.dart:169:27 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\home\presentation\home_screen.dart:208:27 - use_build_context_synchronously
+   info - 'dart:html' is deprecated and shouldn't be used. Use package:web and dart:js_interop instead - lib\features\trip\presentation\chat_screen.dart:4:1 - deprecated_member_use
+   info - Don't use web-only libraries outside Flutter web plugins - lib\features\trip\presentation\chat_screen.dart:4:1 - avoid_web_libraries_in_flutter
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\trip\presentation\fare_estimate_screen.dart:538:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\trip\presentation\fare_estimate_screen.dart:582:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\trip\presentation\trip_screen.dart:273:41 - deprecated_member_use
+

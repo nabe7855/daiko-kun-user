@@ -1,0 +1,18 @@
+﻿Analyzing daiko-kun...                                          
+
+  error - Classes can only extend other classes - lib\features\auth\presentation\auth_provider.dart:9:28 - extends_non_class
+warning - The method doesn't override an inherited method - lib\features\auth\presentation\auth_provider.dart:13:24 - override_on_non_overriding_member
+  error - Undefined name 'state' - lib\features\auth\presentation\auth_provider.dart:20:5 - undefined_identifier
+  error - Undefined name 'state' - lib\features\auth\presentation\auth_provider.dart:35:9 - undefined_identifier
+  error - Undefined name 'state' - lib\features\auth\presentation\auth_provider.dart:37:9 - undefined_identifier
+  error - Undefined name 'state' - lib\features\auth\presentation\auth_provider.dart:43:7 - undefined_identifier
+  error - Undefined name 'state' - lib\features\auth\presentation\auth_provider.dart:48:5 - undefined_identifier
+  error - 'AuthNotifier' doesn't conform to the bound 'AsyncNotifier<UserModel?>' of the type parameter 'NotifierT' - lib\features\auth\presentation\auth_provider.dart:53:39 - type_argument_not_matching_bounds
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\home\presentation\home_screen.dart:169:27 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\home\presentation\home_screen.dart:208:27 - use_build_context_synchronously
+   info - 'dart:html' is deprecated and shouldn't be used. Use package:web and dart:js_interop instead - lib\features\trip\presentation\chat_screen.dart:4:1 - deprecated_member_use
+   info - Don't use web-only libraries outside Flutter web plugins - lib\features\trip\presentation\chat_screen.dart:4:1 - avoid_web_libraries_in_flutter
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\trip\presentation\fare_estimate_screen.dart:538:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\trip\presentation\fare_estimate_screen.dart:582:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\trip\presentation\trip_screen.dart:273:41 - deprecated_member_use
+

@@ -43,6 +43,10 @@
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>現在地から目的地までのルート計算と料金見積もりのために位置情報を使用します。</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>サービス提供中の位置追跡のために位置情報を使用します。</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 </dict>

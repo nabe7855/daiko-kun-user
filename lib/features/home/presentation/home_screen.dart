@@ -84,8 +84,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.daiko_kun',
+                urlTemplate:
+                    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                subdomains: const ['a', 'b', 'c'],
+                userAgentPackageName: 'jp.daikokun.app.user.v1',
               ),
               MarkerLayer(
                 markers: [
@@ -157,8 +159,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // 目的地入力
                   InkWell(
-                    onTap: () {
-                      context.push('/search');
+                    onTap: () async {
+                      final result = await context.push('/search');
+                      if (result != null && result is Map<String, dynamic>) {
+                        final lat = result['lat'];
+                        final lng = result['lon']; // Nominatim returns 'lon'
+                        final name = Uri.encodeComponent(result['name']);
+                        if (mounted) {
+                          context.push(
+                            '/fare_estimate?lat=$lat&lng=$lng&name=$name&startLat=${_currentLocation.latitude}&startLng=${_currentLocation.longitude}',
+                          );
+                        }
+                      }
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -186,8 +198,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // クイック自宅ボタン
                   ElevatedButton.icon(
-                    onPressed: () {
-                      context.push('/search');
+                    onPressed: () async {
+                      final result = await context.push('/search');
+                      if (result != null && result is Map<String, dynamic>) {
+                        final lat = result['lat'];
+                        final lng = result['lon'];
+                        final name = Uri.encodeComponent(result['name']);
+                        if (mounted) {
+                          context.push(
+                            '/fare_estimate?lat=$lat&lng=$lng&name=$name&startLat=${_currentLocation.latitude}&startLng=${_currentLocation.longitude}',
+                          );
+                        }
+                      }
                     },
                     icon: const Icon(Icons.home, size: 28),
                     label: const Text('自宅へ帰る'),

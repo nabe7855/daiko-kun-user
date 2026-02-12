@@ -1,12 +1,15 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 
 import '../../../core/constants/app_colors.dart';
 
 class MatchingScreen extends StatefulWidget {
-  const MatchingScreen({super.key});
+  final String? requestId;
+  const MatchingScreen({super.key, this.requestId});
 
   @override
   State<MatchingScreen> createState() => _MatchingScreenState();
@@ -17,6 +20,7 @@ class _MatchingScreenState extends State<MatchingScreen>
   late AnimationController _animationController;
   int _messageIndex = 0;
   Timer? _messageTimer;
+  Timer? _pollingTimer;
 
   final List<String> _searchMessages = [
     'ドライバーを探しています...',
@@ -44,10 +48,41 @@ class _MatchingScreenState extends State<MatchingScreen>
       }
     });
 
-    // 5秒後にドライバー確定画面へ
-    Future.delayed(const Duration(seconds: 5), () {
-      if (mounted) {
-        context.go('/trip');
+    // バックエンドのステータスをポーリング
+    if (widget.requestId != null) {
+      _startPolling();
+    } else {
+      // リクエストIDがない場合はデバッグ用に5秒後に遷移
+      Future.delayed(const Duration(seconds: 5), () {
+        if (mounted) context.go('/trip?requestId=${widget.requestId}');
+      });
+    }
+  }
+
+  void _startPolling() {
+    _pollingTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+      try {
+        // DriverSideと同じAPIを使う
+        final response = await http.get(
+          Uri.parse('http://localhost:8080/admin/ride-requests'),
+        );
+
+        if (response.statusCode == 200) {
+          final List<dynamic> requests = json.decode(response.body);
+          final myRequest = requests.firstWhere(
+            (r) => r['id'] == widget.requestId,
+            orElse: () => null,
+          );
+
+          if (myRequest != null && myRequest['status'] != 'pending') {
+            _pollingTimer?.cancel();
+            if (mounted) {
+              context.go('/trip?requestId=${widget.requestId}');
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Polling error: $e');
       }
     });
   }
@@ -56,6 +91,7 @@ class _MatchingScreenState extends State<MatchingScreen>
   void dispose() {
     _animationController.dispose();
     _messageTimer?.cancel();
+    _pollingTimer?.cancel();
     super.dispose();
   }
 
