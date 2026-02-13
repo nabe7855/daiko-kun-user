@@ -7,6 +7,7 @@ import '../domain/saved_address_model.dart';
 import 'address_provider.dart';
 import 'address_search_screen.dart';
 import 'auth_provider.dart';
+import 'legal_documents_screen.dart';
 
 class AccountScreen extends ConsumerStatefulWidget {
   const AccountScreen({super.key});
@@ -84,6 +85,23 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                 ),
               ),
               child: const Text('退会する（アカウント削除）'),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: TextButton.icon(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const LegalDocumentsScreen(),
+                ),
+              ),
+              icon: const Icon(Icons.description_outlined),
+              label: const Text('利用規約・プライバシーポリシー'),
+              style: TextButton.styleFrom(foregroundColor: AppColors.navy),
             ),
           ),
           const SizedBox(height: 40),
