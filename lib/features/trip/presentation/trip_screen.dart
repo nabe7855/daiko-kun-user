@@ -46,17 +46,13 @@ class _TripScreenState extends State<TripScreen> {
       try {
         String baseUrl = 'http://localhost:8080';
 
-        // Admin APIから全件取得してIDでフィルタリング（本来は /customer/ride-requests/:id などを使うべき）
+        // IDで指定して1件取得
         final response = await http.get(
-          Uri.parse('$baseUrl/admin/ride-requests'),
+          Uri.parse('$baseUrl/customer/ride-requests/${widget.requestId}'),
         );
 
         if (response.statusCode == 200) {
-          final List<dynamic> requests = json.decode(response.body);
-          final myRequest = requests.firstWhere(
-            (r) => r['id'] == widget.requestId,
-            orElse: () => null,
-          );
+          final myRequest = json.decode(response.body);
 
           if (myRequest != null) {
             final status = myRequest['status'];
@@ -232,6 +228,17 @@ class _TripScreenState extends State<TripScreen> {
                 subdomains: const ['a', 'b', 'c'],
                 userAgentPackageName: 'jp.daikokun.app.user.v1',
               ),
+              PolylineLayer(
+                polylines: [
+                  if (status == 'accepted' || status == 'arrived')
+                    Polyline(
+                      points: [_driverLocation, _userLocation],
+                      strokeWidth: 3.0,
+                      color: AppColors.actionOrange.withOpacity(0.5),
+                      isDotted: true,
+                    ),
+                ],
+              ),
               MarkerLayer(
                 markers: [
                   // ユーザー（出発地）
@@ -374,16 +381,16 @@ class _TripScreenState extends State<TripScreen> {
                                   color: Colors.grey,
                                 ),
                               ),
-                              const Row(
+                              Row(
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     Icons.star,
                                     color: Colors.amber,
                                     size: 20,
                                   ),
                                   Text(
-                                    ' 4.9 (1,200件の評価)',
-                                    style: TextStyle(fontSize: 16),
+                                    ' ${(_requestData?['driver_average_rating'] ?? 0.0).toStringAsFixed(1)} (${_requestData?['driver_rating_count'] ?? 0}件の評価)',
+                                    style: const TextStyle(fontSize: 16),
                                   ),
                                 ],
                               ),

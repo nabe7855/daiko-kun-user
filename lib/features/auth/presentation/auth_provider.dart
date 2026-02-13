@@ -1,6 +1,6 @@
-import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
@@ -70,6 +70,66 @@ class AuthNotifier extends Notifier<AsyncValue<UserModel?>> {
 
   void logout() {
     state = const AsyncValue.data(null);
+  }
+
+  // プロフィールを更新する
+  Future<bool> updateProfile(String id, String name, String email) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/profile'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'id': id, 'name': name, 'email': email}),
+      );
+
+      if (response.statusCode == 200) {
+        // 現在のステートを更新する
+        final currentUser = state.value;
+        if (currentUser != null) {
+          final updatedUser = UserModel(
+            id: currentUser.id,
+            name: name,
+            phoneNumber: currentUser.phoneNumber,
+            email: email,
+            socialId: currentUser.socialId,
+            socialProvider: currentUser.socialProvider,
+            status: currentUser.status,
+          );
+          state = AsyncValue.data(updatedUser);
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // FCMトークンを更新する
+  Future<void> updateFCMToken(String id, String token) async {
+    try {
+      await http.patch(
+        Uri.parse('$baseUrl/fcm-token'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'id': id, 'fcm_token': token}),
+      );
+    } catch (e) {
+      debugPrint('FCM token update error: $e');
+    }
+  }
+
+  // アカウントを削除する
+  Future<bool> deleteAccount(String id) async {
+    try {
+      final response = await http.delete(Uri.parse('$baseUrl/$id'));
+
+      if (response.statusCode == 200) {
+        state = const AsyncValue.data(null);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
   }
 }
 

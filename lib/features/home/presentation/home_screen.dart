@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../auth/presentation/address_provider.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   LatLng _currentLocation = const LatLng(35.681236, 139.767125); // 東京駅
   String _addressText = '現在地を取得中...';
   final MapController _mapController = MapController();
@@ -70,8 +72,21 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _navigateToFareEstimate({
+    required double lat,
+    required double lng,
+    required String name,
+  }) {
+    final encodedName = Uri.encodeComponent(name);
+    context.push(
+      '/fare_estimate?lat=$lat&lng=$lng&name=$encodedName&startLat=${_currentLocation.latitude}&startLng=${_currentLocation.longitude}',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final addressesAsync = ref.watch(addressProvider);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -147,6 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: const BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -162,14 +178,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () async {
                       final result = await context.push('/search');
                       if (result != null && result is Map<String, dynamic>) {
-                        final lat = result['lat'];
-                        final lng = result['lon']; // Nominatim returns 'lon'
-                        final name = Uri.encodeComponent(result['name']);
-                        if (mounted) {
-                          context.push(
-                            '/fare_estimate?lat=$lat&lng=$lng&name=$name&startLat=${_currentLocation.latitude}&startLng=${_currentLocation.longitude}',
-                          );
-                        }
+                        _navigateToFareEstimate(
+                          lat: result['lat'],
+                          lng: result['lon'],
+                          name: result['name'],
+                        );
                       }
                     },
                     child: Container(
@@ -196,32 +209,111 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 16),
 
-                  // クイック自宅ボタン
-                  ElevatedButton.icon(
-                    onPressed: () async {
-                      final result = await context.push('/search');
-                      if (result != null && result is Map<String, dynamic>) {
-                        final lat = result['lat'];
-                        final lng = result['lon'];
-                        final name = Uri.encodeComponent(result['name']);
-                        if (mounted) {
-                          context.push(
-                            '/fare_estimate?lat=$lat&lng=$lng&name=$name&startLat=${_currentLocation.latitude}&startLng=${_currentLocation.longitude}',
-                          );
-                        }
-                      }
+                  // クイック保存済み住所ボタン
+                  addressesAsync.when(
+                    data: (addresses) {
+                      final home = addresses.cast<dynamic>().firstWhere(
+                        (a) => a.label == '自宅',
+                        orElse: () => null,
+                      );
+                      final work = addresses.cast<dynamic>().firstWhere(
+                        (a) => a.label == '職場',
+                        orElse: () => null,
+                      );
+
+                      return Row(
+                        children: [
+                          if (home != null)
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: _QuickAddressButton(
+                                  icon: Icons.home,
+                                  label: '自宅へ',
+                                  onTap: () => _navigateToFareEstimate(
+                                    lat: home.latitude,
+                                    lng: home.longitude,
+                                    name: home.address,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (work != null)
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8),
+                                child: _QuickAddressButton(
+                                  icon: Icons.work,
+                                  label: '職場へ',
+                                  onTap: () => _navigateToFareEstimate(
+                                    lat: work.latitude,
+                                    lng: work.longitude,
+                                    name: work.address,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (home == null && work == null)
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () async {
+                                  final result = await context.push('/search');
+                                  if (result != null &&
+                                      result is Map<String, dynamic>) {
+                                    _navigateToFareEstimate(
+                                      lat: result['lat'],
+                                      lng: result['lon'],
+                                      name: result['name'],
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.home, size: 28),
+                                label: const Text('自宅へ帰る'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.navy,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
                     },
-                    icon: const Icon(Icons.home, size: 28),
-                    label: const Text('自宅へ帰る'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.navy,
-                    ),
+                    loading: () => const SizedBox.shrink(),
+                    error: (e, s) => const SizedBox.shrink(),
                   ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _QuickAddressButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _QuickAddressButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 24),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.navy,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }

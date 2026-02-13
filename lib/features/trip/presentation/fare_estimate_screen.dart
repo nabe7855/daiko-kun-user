@@ -17,6 +17,7 @@ class FareEstimateScreen extends StatefulWidget {
   final String destinationName;
   final double? startLat;
   final double? startLng;
+  final DateTime? scheduledAt;
 
   const FareEstimateScreen({
     super.key,
@@ -25,6 +26,7 @@ class FareEstimateScreen extends StatefulWidget {
     required this.destinationName,
     this.startLat,
     this.startLng,
+    this.scheduledAt,
   });
 
   @override
@@ -40,6 +42,7 @@ class _FareEstimateScreenState extends State<FareEstimateScreen> {
   List<double> _segmentDistancesKm = [];
   final List<LocationStop> _waypoints = [];
   final MapController _mapController = MapController();
+  String _paymentMethod = 'cash'; // Default payment method
 
   Future<void> _requestRide() async {
     setState(() => _isLoading = true);
@@ -102,6 +105,8 @@ class _FareEstimateScreenState extends State<FareEstimateScreen> {
           'pickup_address': pickupAddress,
           'destination_address': widget.destinationName,
           'estimated_fare': _estimatedFare.toDouble(),
+          'scheduled_at': widget.scheduledAt?.toIso8601String(),
+          'payment_method': _paymentMethod,
         }),
       );
 
@@ -428,6 +433,45 @@ class _FareEstimateScreenState extends State<FareEstimateScreen> {
                                   onTap: () {},
                                 ),
                                 const SizedBox(height: 32),
+                                const Text(
+                                  'お支払い方法',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    _PaymentMethodChip(
+                                      label: '現金',
+                                      icon: Icons.payments,
+                                      isSelected: _paymentMethod == 'cash',
+                                      onTap: () => setState(
+                                        () => _paymentMethod = 'cash',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    _PaymentMethodChip(
+                                      label: 'カード',
+                                      icon: Icons.credit_card,
+                                      isSelected: _paymentMethod == 'card',
+                                      onTap: () => setState(
+                                        () => _paymentMethod = 'card',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    _PaymentMethodChip(
+                                      label: 'PayPay',
+                                      icon: Icons.qr_code_scanner,
+                                      isSelected: _paymentMethod == 'paypay',
+                                      onTap: () => setState(
+                                        () => _paymentMethod = 'paypay',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 32),
                                 // 配車確定ボタン
                                 SizedBox(
                                   width: double.infinity,
@@ -722,6 +766,57 @@ class _VehicleOptionCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentMethodChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _PaymentMethodChip({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.navy : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? AppColors.navy : Colors.grey.shade300,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? Colors.white : Colors.grey,
+                size: 24,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.grey.shade700,
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

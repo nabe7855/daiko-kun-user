@@ -2,20 +2,23 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../core/constants/app_colors.dart';
+import '../../auth/presentation/address_provider.dart';
 
-class DestinationSearchScreen extends StatefulWidget {
+class DestinationSearchScreen extends ConsumerStatefulWidget {
   const DestinationSearchScreen({super.key});
 
   @override
-  State<DestinationSearchScreen> createState() =>
+  ConsumerState<DestinationSearchScreen> createState() =>
       _DestinationSearchScreenState();
 }
 
-class _DestinationSearchScreenState extends State<DestinationSearchScreen> {
+class _DestinationSearchScreenState
+    extends ConsumerState<DestinationSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<dynamic> _searchResults = [];
   bool _isLoading = false;
@@ -32,8 +35,8 @@ class _DestinationSearchScreenState extends State<DestinationSearchScreen> {
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      if (query.length > 2) {
-        _searchDestination(query);
+      if (query.trim().length > 2) {
+        _searchDestination(query.trim());
       } else {
         setState(() {
           _searchResults = [];
@@ -84,6 +87,9 @@ class _DestinationSearchScreenState extends State<DestinationSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final addressesAsync = ref.watch(addressProvider);
+    final isQueryEmpty = _searchController.text.trim().length <= 2;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('目的地を検索'),
@@ -124,52 +130,104 @@ class _DestinationSearchScreenState extends State<DestinationSearchScreen> {
           if (_isLoading)
             const LinearProgressIndicator(color: AppColors.actionOrange),
           Expanded(
-            child:
-                _searchResults.isEmpty &&
-                    !_isLoading &&
-                    _searchController.text.length > 2
-                ? const Center(child: Text('結果が見つかりませんでした'))
-                : ListView.separated(
-                    itemCount: _searchResults.length,
-                    separatorBuilder: (context, index) => const Divider(),
-                    itemBuilder: (context, index) {
-                      final result = _searchResults[index];
-                      final displayName = result['display_name'];
-
-                      return ListTile(
-                        leading: const Icon(
-                          Icons.location_on,
-                          color: AppColors.navy,
-                        ),
-                        title: Text(
-                          displayName,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        onTap: () {
-                          final lat =
-                              double.tryParse(result['lat'].toString()) ?? 0.0;
-                          final lon =
-                              double.tryParse(result['lon'].toString()) ?? 0.0;
-                          final name = result['display_name'];
-
-                          if (Navigator.of(context).canPop()) {
-                            Navigator.of(
-                              context,
-                            ).pop({'lat': lat, 'lon': lon, 'name': name});
-                          } else {
-                            context.push(
-                              '/fare_estimate?lat=$lat&lng=$lon&name=${Uri.encodeComponent(name)}',
-                            );
-                          }
-                        },
-                      );
-                    },
-                  ),
+            child: isQueryEmpty
+                ? addressesAsync.when(
+                    data: (addresses) => addresses.isEmpty
+                        ? const Center(child: Text('3文字以上入力して検索してください'))
+                        : _buildSavedAddressesList(addresses),
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (e, s) => Center(child: Text('エラー: $e')),
+                  )
+                : _buildSearchResultsList(),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildSavedAddressesList(List<dynamic> addresses) {
+    return ListView(
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            '登録済みの住所',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+              fontSize: 14,
+            ),
+          ),
+        ),
+        ...addresses.map(
+          (a) => ListTile(
+            leading: Icon(
+              a.label == '自宅'
+                  ? Icons.home
+                  : a.label == '職場'
+                  ? Icons.work
+                  : Icons.location_on,
+              color: AppColors.navy,
+            ),
+            title: Text(a.label),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(a.address, maxLines: 1, overflow: TextOverflow.ellipsis),
+                if (a.description.isNotEmpty)
+                  Text(
+                    a.description,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+            onTap: () => _selectLocation(a.latitude, a.longitude, a.address),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchResultsList() {
+    if (_searchResults.isEmpty && !_isLoading) {
+      return const Center(child: Text('結果が見つかりませんでした'));
+    }
+
+    return ListView.separated(
+      itemCount: _searchResults.length,
+      separatorBuilder: (context, index) => const Divider(),
+      itemBuilder: (context, index) {
+        final result = _searchResults[index];
+        final displayName = result['display_name'];
+
+        return ListTile(
+          leading: const Icon(Icons.location_on, color: AppColors.navy),
+          title: Text(
+            displayName,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 16),
+          ),
+          onTap: () => _selectLocation(
+            double.tryParse(result['lat'].toString()) ?? 0.0,
+            double.tryParse(result['lon'].toString()) ?? 0.0,
+            result['display_name'],
+          ),
+        );
+      },
+    );
+  }
+
+  void _selectLocation(double lat, double lon, String name) {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop({'lat': lat, 'lon': lon, 'name': name});
+    } else {
+      context.push(
+        '/fare_estimate?lat=$lat&lng=$lon&name=${Uri.encodeComponent(name)}',
+      );
+    }
   }
 }

@@ -64,15 +64,13 @@ class _MatchingScreenState extends State<MatchingScreen>
       try {
         // DriverSideと同じAPIを使う
         final response = await http.get(
-          Uri.parse('http://localhost:8080/admin/ride-requests'),
+          Uri.parse(
+            'http://localhost:8080/customer/ride-requests/${widget.requestId}',
+          ),
         );
 
         if (response.statusCode == 200) {
-          final List<dynamic> requests = json.decode(response.body);
-          final myRequest = requests.firstWhere(
-            (r) => r['id'] == widget.requestId,
-            orElse: () => null,
-          );
+          final myRequest = json.decode(response.body);
 
           if (myRequest != null && myRequest['status'] != 'pending') {
             _pollingTimer?.cancel();
@@ -85,6 +83,20 @@ class _MatchingScreenState extends State<MatchingScreen>
         debugPrint('Polling error: $e');
       }
     });
+  }
+
+  Future<void> _cancelRequest() async {
+    try {
+      await http.patch(
+        Uri.parse(
+          'http://localhost:8080/customer/ride-requests/${widget.requestId}/status',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'status': 'cancelled'}),
+      );
+    } catch (e) {
+      debugPrint('Cancel error: $e');
+    }
   }
 
   @override
@@ -208,12 +220,14 @@ class _MatchingScreenState extends State<MatchingScreen>
 
             const Spacer(),
 
-            // キャンセルボタン
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: OutlinedButton(
-                onPressed: () {
-                  context.pop();
+                onPressed: () async {
+                  if (widget.requestId != null) {
+                    await _cancelRequest();
+                  }
+                  if (mounted) context.pop();
                 },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.error,

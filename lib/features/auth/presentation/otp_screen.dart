@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../domain/user_model.dart';
 import 'auth_provider.dart';
@@ -31,7 +32,12 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
         ).showSnackBar(SnackBar(content: Text('エラーが発生しました: ${next.error}')));
       } else if (next.hasValue && next.value != null) {
         // ログイン成功
-        context.go('/home');
+        final user = next.value!;
+        if (user.name == null || user.name!.isEmpty) {
+          context.go('/register?userId=${user.id}');
+        } else {
+          context.go('/home');
+        }
       }
     });
 

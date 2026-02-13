@@ -2,13 +2,15 @@ import 'package:go_router/go_router.dart';
 
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/otp_screen.dart';
+import '../features/auth/presentation/register_screen.dart';
 import '../features/auth/presentation/splash_screen.dart';
-import '../features/home/presentation/home_screen.dart';
+import '../features/home/presentation/main_layout.dart';
 import '../features/trip/presentation/destination_search_screen.dart';
 import '../features/trip/presentation/fare_estimate_screen.dart';
 import '../features/trip/presentation/matching_screen.dart';
 import '../features/trip/presentation/rating_screen.dart';
 import '../features/trip/presentation/trip_screen.dart';
+import '../features/trip/presentation/user_reservation_list_screen.dart';
 
 final goRouter = GoRouter(
   initialLocation: '/splash',
@@ -22,7 +24,14 @@ final goRouter = GoRouter(
         return OtpScreen(phoneNumber: phone);
       },
     ),
-    GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+    GoRoute(
+      path: '/register',
+      builder: (context, state) {
+        final userId = state.uri.queryParameters['userId'] ?? '';
+        return RegisterScreen(userId: userId);
+      },
+    ),
+    GoRoute(path: '/home', builder: (context, state) => const MainLayout()),
     GoRoute(
       path: '/search',
       builder: (context, state) => const DestinationSearchScreen(),
@@ -46,12 +55,20 @@ final goRouter = GoRouter(
           startLng = double.tryParse(state.uri.queryParameters['startLng']!);
         }
 
+        DateTime? scheduledAt;
+        if (state.uri.queryParameters['scheduledAt'] != null) {
+          scheduledAt = DateTime.tryParse(
+            state.uri.queryParameters['scheduledAt']!,
+          );
+        }
+
         return FareEstimateScreen(
           destinationLat: lat,
           destinationLng: lng,
           destinationName: name,
           startLat: startLat,
           startLng: startLng,
+          scheduledAt: scheduledAt,
         );
       },
     ),
@@ -77,6 +94,10 @@ final goRouter = GoRouter(
         final fare = double.tryParse(fareStr) ?? 0.0;
         return RatingScreen(requestId: requestId, fare: fare);
       },
+    ),
+    GoRoute(
+      path: '/reservations',
+      builder: (context, state) => const UserReservationListScreen(),
     ),
   ],
 );
